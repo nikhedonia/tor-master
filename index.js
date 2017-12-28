@@ -66,34 +66,44 @@ function requestOverTor(url, options={}, port, host = 'localhost') {
   ));
 };
 
-function spawnTorProcess(port, port2, tmpDir, {password, hash}) {
-  const process = spawn("tor", [
+function spawnTorProcess(port, port2, tmpDir, {password, hash}, onStateChange=()=>{}) {
+  let dead = false;
+  const torProcess = spawn("tor", [
     `--CookieAuthentication 0`,
     `--HashedControlPassword "${hash}"`,
     `--DataDirectory "${tmpDir}"`,
     `--ControlPort ${port2}`,
-    `--SocksPort ${port}`], {shell:true, detached:true});
+    `--SocksPort ${port}`], 
+    {shell:true, detached:true}
+  );
+
+  process.on('exit', () => {
+    if (!dead) {
+      process.kill(-torProcess.pid);
+    }
+  })
 
   return new Promise( (done, reject) => {
     let data = '';
     let success=false;
     let killLock=null;
     let renewLock=null;
-    process.stderr.on('data', b=>data+=b.toString());
-    process.stderr.on('end', ()=>success||reject(data));
-    process.stdout.on('end', ()=>success||reject());
-    process.stdout.on('data', data => {
-
+    torProcess.stderr.on('data', b=>data+=b.toString());
+    torProcess.stderr.on('end', ()=>success||reject(data));
+    torProcess.stdout.on('end', ()=>success||reject());
+    torProcess.stdout.on('data', data => {
+      onStateChange(data.toString());
       if (data.toString('utf8').indexOf('Done')>-1) {
         success=true;
         return done({
-          process,
+          process: torProcess,
           request: (url, options) => requestOverTor(url, options, port),
           renew:  () => renewLock||(renewLock=renewTor(password, port2).then( () => {
             renewLock=null;
           })),
           end: () => killLock||(killLock=killTor(password, port2).then( () => {
             killLock=null;
+            dead=true;
           }))
         });
       }  
@@ -101,14 +111,14 @@ function spawnTorProcess(port, port2, tmpDir, {password, hash}) {
   })
 }
 
-function createTorAgent() {
+function createTorAgent(onStateChange=()=>{}) {
   const ports = new Promise( (done, reject) => openports(2, (e, ports)=> e? reject(e) : done(ports)));
   const tmpobj = new Promise( (done, reject) => tmp.dir({unsafeCleanup:1}, (e, path, cleanup) => e? reject(e) : done({path, cleanup})));
   const pair = generateTorPassword();
   
   return Promise.all([ports, pair, tmpobj]).then(
     ([ports, pair, {path, cleanup}]) => {
-      return spawnTorProcess(ports[0], ports[1], path, pair).then(
+      return spawnTorProcess(ports[0], ports[1], path, pair, onStateChange).then(
         tor => {
           tor.process.on('exit', cleanup);
           return tor;
