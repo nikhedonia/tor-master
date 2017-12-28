@@ -59,7 +59,7 @@ function requestOverTor(url, options={}, port, host = 'localhost') {
     agentOptions: {
       socksHost: 'localhost', // Host set in config file.
       socksPort: port  // Port set in config file.
-    }, options}), (e, res) => {
+    }}, options), (e, res) => {
       if (e) return reject(e);
       return done(res)
     }
@@ -115,7 +115,7 @@ function spawnTorProcess(port, port2, tmpDir, {password, hash}, onStateChange=()
 }
 
 function createTorAgent(onStateChange=()=>{}) {
-  const ports = new Promise( (done, reject) => openports(2, (e, ports)=> e? reject(e) : done(ports)));
+  const ports = new Promise( (done, reject) => openports(2, (e, ports) => e? reject(e) : done(ports)));
   const tmpobj = new Promise( (done, reject) => tmp.dir({unsafeCleanup:1}, (e, path, cleanup) => e? reject(e) : done({path, cleanup})));
   const pair = generateTorPassword();
   
