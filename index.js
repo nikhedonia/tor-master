@@ -96,6 +96,9 @@ function spawnTorProcess(port, port2, tmpDir, {password, hash}, onStateChange=()
       if (data.toString('utf8').indexOf('Done')>-1) {
         success=true;
         return done({
+          port,
+          controlPort:port2,
+          tmp: tmpDir,
           process: torProcess,
           request: (url, options) => requestOverTor(url, options, port),
           renew:  () => renewLock||(renewLock=renewTor(password, port2).then( () => {
