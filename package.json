@@ -1,0 +1,32 @@
+{
+  "name": "tor-master",
+  "version": "1.0.0",
+  "description": "spawn tor demons and make requests over tor",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nikhedonia/tor-master.git"
+  },
+  "keywords": [
+    "tor",
+    "request",
+    "annonymous"
+  ],
+  "author": "Gaetano Checinski",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nikhedonia/tor-master/issues"
+  },
+  "homepage": "https://github.com/nikhedonia/tor-master#readme",
+  "dependencies": {
+    "openports": "0.0.1",
+    "request": "^2.83.0",
+    "socks5-http-client": "^1.0.2",
+    "socks5-https-client": "^1.2.1",
+    "tmp": "0.0.33",
+    "uuid": "^3.1.0"
+  }
+}
