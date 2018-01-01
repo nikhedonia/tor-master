@@ -14,8 +14,8 @@ requires tor installed and be in your path
 
 const {createTorAgent} = require('tor-master');
 
-createTorAgent().then( agent=> {
-  return agent.request('https://api.ipify.org')
+createTorAgent( msg=>console.log(msg) ).then( agent=> {
+  return agent.get('https://api.ipify.org') //uses superagent
     .then( ({body}) => console.log(body))
     .then( () => agent.request('https://api.ipify.org'))
     .then( ({body}) => console.log(body))

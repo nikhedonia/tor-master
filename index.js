@@ -1,11 +1,11 @@
-const Https = require('socks5-https-client/lib/Agent');
-const Http = require('socks5-http-client/lib/Agent');
+const proxyfier = require('superagent-proxy');
 const openports = require('openports');
 const net = require('net');
 const tmp = require('tmp');
-const request  = require('request');
+const request  = require('superagent');
 const uuid = require('uuid/v4');
 const { spawn, exec } = require('child_process');
+proxyfier(request);
 
 function generateTorPassword() {
   const password = uuid();
@@ -51,21 +51,6 @@ function killTor(password, port, host='localhost') {
 }
 
 
-function requestOverTor(url, options={}, port, host = 'localhost') {
-  const Agent = url.slice(0,5) == 'https' ? Https : Http;
-  return new Promise( (done, reject) => request(Object.assign({
-    url,
-    agentClass: Agent,
-    agentOptions: {
-      socksHost: 'localhost', // Host set in config file.
-      socksPort: port  // Port set in config file.
-    }}, options), (e, res) => {
-      if (e) return reject(e);
-      return done(res)
-    }
-  ));
-};
-
 function spawnTorProcess(port, port2, tmpDir, {password, hash}, onStateChange=()=>{}) {
   let dead = false;
   const torProcess = spawn("tor", [
@@ -77,10 +62,11 @@ function spawnTorProcess(port, port2, tmpDir, {password, hash}, onStateChange=()
     {shell:true, detached:true}
   );
 
-  process.on('exit', () => {
+  process.on('SIGINT', () => {
     if (!dead) {
       process.kill(-torProcess.pid);
     }
+    process.exit(0);
   })
 
   return new Promise( (done, reject) => {
@@ -100,7 +86,10 @@ function spawnTorProcess(port, port2, tmpDir, {password, hash}, onStateChange=()
           controlPort:port2,
           tmp: tmpDir,
           process: torProcess,
-          request: (url, options) => requestOverTor(url, options, port),
+          get: (url) => request.get(url).proxy('socks://localhost:'+port),
+          put: (url) => request.put(url).proxy('socks://localhost:'+port),
+          post: (url) => request.post(url).proxy('socks://localhost:'+port),
+          delete: (url) => request.delete(url).proxy('socks://localhost:'+port),
           renew:  () => renewLock||(renewLock=renewTor(password, port2).then( () => {
             renewLock=null;
           })),
@@ -135,7 +124,6 @@ module.exports = {
   generateTorPassword,
   killTor,
   renewTor,
-  requestOverTor,
   spawnTorProcess,
   createTorAgent
 }
