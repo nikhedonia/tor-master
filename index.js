@@ -66,7 +66,6 @@ function spawnTorProcess(port, port2, tmpDir, {password, hash}, onStateChange=()
     if (!dead) {
       process.kill(-torProcess.pid);
     }
-    process.exit(0);
   })
 
   return new Promise( (done, reject) => {
