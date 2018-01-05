@@ -31,7 +31,7 @@ function execTor(command, password, port, host='localhost') {
   })
 }
 
-function renewTor(password, port, host='localhost') {
+function changeIPTor(password, port, host='localhost') {
   return execTor([
    `authenticate "${password}"`, 
    'signal newnym', 
@@ -72,7 +72,7 @@ function spawnTorProcess(port, port2, tmpDir, {password, hash}, onStateChange=()
     let data = '';
     let success=false;
     let killLock=null;
-    let renewLock=null;
+    let changeIPLock=null;
     torProcess.stderr.on('data', b=>data+=b.toString());
     torProcess.stderr.on('end', ()=>success||reject(data));
     torProcess.stdout.on('end', ()=>success||reject());
@@ -89,8 +89,8 @@ function spawnTorProcess(port, port2, tmpDir, {password, hash}, onStateChange=()
           put: (url) => request.put(url).proxy('socks://localhost:'+port),
           post: (url) => request.post(url).proxy('socks://localhost:'+port),
           delete: (url) => request.delete(url).proxy('socks://localhost:'+port),
-          renew:  () => renewLock||(renewLock=renewTor(password, port2).then( () => {
-            renewLock=null;
+          changeIP:  () => changeIPLock||(changeIPLock=changeIPTor(password, port2).then( () => {
+            changeIPLock=null;
           })),
           end: () => killLock||(killLock=killTor(password, port2).then( () => {
             killLock=null;
@@ -122,7 +122,7 @@ function createTorAgent(onStateChange=()=>{}) {
 module.exports = {
   generateTorPassword,
   killTor,
-  renewTor,
+  changeIPTor,
   spawnTorProcess,
   createTorAgent
 }
