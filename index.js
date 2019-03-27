@@ -12,7 +12,7 @@ function generateTorPassword() {
   return new Promise( (done, reject) => {
     exec(`tor --hash-password ${password}`, (error, hash, stderr) => {
       if (error) return reject({error, stderr});
-      return done({password, hash: hash.trim()});
+      return done({password:password.trim(), hash: hash.trim().replace(/(.*?)\n/img,'')});
     })
   });
 }
@@ -54,6 +54,7 @@ function killTor(password, port, host='localhost') {
 function spawnTorProcess(port, port2, tmpDir, {password, hash}, onStateChange=()=>{}) {
   let dead = false;
   const torProcess = spawn("tor", [
+    `-f .torrc`,
     `--CookieAuthentication 0`,
     `--HashedControlPassword "${hash}"`,
     `--DataDirectory "${tmpDir}"`,
@@ -102,7 +103,7 @@ function spawnTorProcess(port, port2, tmpDir, {password, hash}, onStateChange=()
   })
 }
 
-function createTorAgent(onStateChange=()=>{}) {
+function createTorAgent (onStateChange=()=>{}) {
   const ports = new Promise( (done, reject) => openports(2, (e, ports) => e? reject(e) : done(ports)));
   const tmpobj = new Promise( (done, reject) => tmp.dir({unsafeCleanup:1}, (e, path, cleanup) => e? reject(e) : done({path, cleanup})));
   const pair = generateTorPassword();
@@ -114,7 +115,7 @@ function createTorAgent(onStateChange=()=>{}) {
           tor.process.on('exit', cleanup);
           return tor;
         }
-      ).catch(e=>console.log(e));
+      ) ;
     }
   )
 }
