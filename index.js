@@ -10,9 +10,9 @@ proxyfier(request);
 function generateTorPassword() {
   const password = uuid();
   return new Promise( (done, reject) => {
-    exec(`tor --hash-password ${password}`, (err, hash, stderr) => {
-      if (err) return reject({error, stderr});
-      return done({password, hash:hash.trim()});
+    exec(`tor --hash-password ${password}`, (error, hash, stderr) => {
+      if (error) return reject({error, stderr});
+      return done({password, hash: hash.trim()});
     })
   });
 }
