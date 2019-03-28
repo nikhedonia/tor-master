@@ -55,6 +55,8 @@ function spawnTorProcess(port, port2, tmpDir, {password, hash}, onStateChange=()
   let dead = false;
   const torProcess = spawn("tor", [
     `-f .torrc`,
+    `--ignore-missing-torrc`,
+    `--allow-missing-torrc`,
     `--CookieAuthentication 0`,
     `--HashedControlPassword "${hash}"`,
     `--DataDirectory "${tmpDir}"`,
